@@ -1,0 +1,31 @@
+[gd_scene load_steps=6 format=3 uid="uid://du52y6ameh1lx"]
+
+[ext_resource type="Texture2D" uid="uid://cgsr3cy3lky6t" path="res://Assets/Textures/Stone/Stone_18-512x512.png" id="1_ig7tw"]
+[ext_resource type="PackedScene" uid="uid://cuepys8461r8" path="res://player.tscn" id="2_0xm2m"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7dm0k"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0xm2m"]
+albedo_texture = ExtResource("1_ig7tw")
+
+[sub_resource type="BoxMesh" id="BoxMesh_h2yge"]
+material = SubResource("StandardMaterial3D_0xm2m")
+size = Vector3(60, 1, 60)
+
+[node name="Main" type="Node"]
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_7dm0k")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_h2yge")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.998895, 0.00776968, 0.0463552, -0.0464095, 0.00695799, 0.998898, 0.00743858, -0.999946, 0.0073109, 0, 34.1697, 0)
+shadow_enabled = true
+
+[node name="Player" parent="." instance=ExtResource("2_0xm2m")]
