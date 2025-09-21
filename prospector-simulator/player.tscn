@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=4 uid="uid://cuepys8461r8"]
+[gd_scene load_steps=27 format=4 uid="uid://cuepys8461r8"]
 
 [ext_resource type="Script" uid="uid://wphbwvx6clp3" path="res://player.gd" id="1_onrkg"]
 [ext_resource type="Texture2D" uid="uid://dbi7567nhmmqf" path="res://Assets/Medieval Character Models/texture/people_texture_map.png" id="2_onrkg"]
@@ -162,9 +162,6 @@ bind/40/pose = Transform3D(1, -7.03565e-07, 1.1585e-05, 1.15786e-05, -5.6636e-07
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_i3pqv"]
 animation = &"AnimationLibrary_Godot_Standard/Death01"
 
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ivps1"]
-animation = &"AnimationLibrary_Godot_Standard/Idle"
-
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_urp6f"]
 animation = &"AnimationLibrary_Godot_Standard/Jump"
 
@@ -195,6 +192,9 @@ animation = &"AnimationLibrary_Godot_Standard/Sprint"
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_nvl01"]
 animation = &"AnimationLibrary_Godot_Standard/Sprint"
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ivps1"]
+animation = &"AnimationLibrary_Godot_Standard/Idle"
+
 [sub_resource type="AnimationNodeBlendSpace2D" id="AnimationNodeBlendSpace2D_sweqy"]
 blend_point_0/node = SubResource("AnimationNodeAnimation_hqtel")
 blend_point_0/pos = Vector2(0, 1)
@@ -212,27 +212,11 @@ blend_point_6/node = SubResource("AnimationNodeAnimation_n7ghd")
 blend_point_6/pos = Vector2(-2, 0)
 blend_point_7/node = SubResource("AnimationNodeAnimation_nvl01")
 blend_point_7/pos = Vector2(2, 0)
+blend_point_8/node = SubResource("AnimationNodeAnimation_ivps1")
+blend_point_8/pos = Vector2(0, 0)
 min_space = Vector2(-2, -2)
 max_space = Vector2(2, 2)
 snap = Vector2(1, 1)
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_bwjto"]
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_606se"]
-xfade_time = 0.2
-advance_mode = 2
-advance_condition = &"is_jumping"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_op7ga"]
-xfade_time = 0.2
-advance_mode = 2
-advance_condition = &"is_moving"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_q13i1"]
-xfade_time = 0.4
-advance_mode = 2
-advance_condition = &"idle"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pylmc"]
 xfade_time = 0.2
@@ -247,27 +231,23 @@ advance_condition = &"is_landing"
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_pbfsw"]
 xfade_time = 0.2
 advance_mode = 2
-advance_condition = &"is_moving"
+advance_condition = &"movement"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5tmop"]
-xfade_time = 0.2
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_i3pqv"]
 advance_mode = 2
-advance_condition = &"idle"
 
 [sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_n7ghd"]
 states/Die/node = SubResource("AnimationNodeAnimation_i3pqv")
 states/Die/position = Vector2(1004, 249.386)
 states/End/position = Vector2(984, 125.6)
-states/Idle/node = SubResource("AnimationNodeAnimation_ivps1")
-states/Idle/position = Vector2(507.4, 119.2)
 states/Jump/node = SubResource("AnimationNodeAnimation_urp6f")
 states/Jump/position = Vector2(584.2, 51.2)
 states/Land/node = SubResource("AnimationNodeAnimation_bwjto")
 states/Land/position = Vector2(737, 63.2)
 states/Movement/node = SubResource("AnimationNodeBlendSpace2D_sweqy")
-states/Movement/position = Vector2(658.6, 191.582)
+states/Movement/position = Vector2(445.8, 145.976)
 states/Start/position = Vector2(263.84, 155.974)
-transitions = ["Start", "Idle", SubResource("AnimationNodeStateMachineTransition_bwjto"), "Idle", "Jump", SubResource("AnimationNodeStateMachineTransition_606se"), "Idle", "Movement", SubResource("AnimationNodeStateMachineTransition_op7ga"), "Movement", "Idle", SubResource("AnimationNodeStateMachineTransition_q13i1"), "Movement", "Jump", SubResource("AnimationNodeStateMachineTransition_pylmc"), "Jump", "Land", SubResource("AnimationNodeStateMachineTransition_u1c27"), "Land", "Movement", SubResource("AnimationNodeStateMachineTransition_pbfsw"), "Land", "Idle", SubResource("AnimationNodeStateMachineTransition_5tmop")]
+transitions = ["Movement", "Jump", SubResource("AnimationNodeStateMachineTransition_pylmc"), "Jump", "Land", SubResource("AnimationNodeStateMachineTransition_u1c27"), "Land", "Movement", SubResource("AnimationNodeStateMachineTransition_pbfsw"), "Start", "Movement", SubResource("AnimationNodeStateMachineTransition_i3pqv")]
 graph_offset = Vector2(25, 34)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_onrkg"]
@@ -588,10 +568,9 @@ root_node = NodePath("../../..")
 callback_mode_process = 0
 tree_root = SubResource("AnimationNodeStateMachine_n7ghd")
 anim_player = NodePath("../AnimationPlayer")
-parameters/conditions/idle = false
 parameters/conditions/is_jumping = false
 parameters/conditions/is_landing = false
-parameters/conditions/is_moving = false
+parameters/conditions/movement = false
 parameters/Movement/blend_position = Vector2(0.00575042, 1.10044)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
@@ -610,4 +589,6 @@ transform = Transform3D(-1, -2.99003e-08, 8.21506e-08, 0, 0.939693, 0.34202, -8.
 fov = 113.332
 
 [node name="LandTimer" type="Timer" parent="."]
-wait_time = 0.2
+wait_time = 1.27
+
+[connection signal="timeout" from="LandTimer" to="." method="_on_land_timer_timeout"]

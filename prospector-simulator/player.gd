@@ -10,7 +10,7 @@ var target_velocity = Vector3.ZERO
 var run_toggle = false
 @onready var state_machine = $Pivot/city_dwellers_1/AnimationTree["parameters/playback"]
 @onready var animation_tree = $Pivot/city_dwellers_1/AnimationTree
-
+var has_jumped = false
 var landed_recently = false
 
 var is_first_person = true # Set this to true or false to switch view
@@ -91,13 +91,10 @@ func _physics_process(delta):
 		var movement_yaw = atan2(direction.x, direction.z)
 		$Pivot.rotation.y = lerp_angle($Pivot.rotation.y, movement_yaw, delta * 10.0)
 
-		if is_on_floor():
-			switch_state("Movement")
+		#if is_on_floor():
+			#switch_state("Movement")
 	else:
 		run_toggle = false
-		if is_on_floor() and !landed_recently and state_machine.get_current_node() != "Jump":
-			switch_state("Idle")
-
 		# Always rotate character to face camera yaw when not moving
 		if is_first_person:
 			$Pivot.rotation.y = lerp_angle($Pivot.rotation.y, first_person_camera_pivot.rotation.y, delta * 10.0)
@@ -113,6 +110,7 @@ func _physics_process(delta):
 	# Jump
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = jump_velocity
+		has_jumped = true
 		switch_state("Jump")
 	
 	if is_on_floor() and state_machine.get_current_node() == "Jump": #and !landed_recently:
@@ -163,19 +161,16 @@ func _input(event):
 func toggle_view():
 	is_first_person = !is_first_person
 
-func _on_LandTimer_timeout():
+func _on_land_timer_timeout():
+	has_jumped = false
 	landed_recently = false
-	if velocity.length() < 0.1:
-		switch_state("Idle")
-	else:
-		switch_state("Movement")
+	switch_state("Movement")
 
 func update_animation_parameters():
 	var speed = velocity.length()
 	var is_idle = speed < 0.1
-	animation_tree.set("parameters/conditions/idle", is_idle)
-	animation_tree.set("parameters/conditions/is_moving", !is_idle)
-	animation_tree.set("parameters/conditions/is_jumping", !is_on_floor())
+	#animation_tree.set("parameters/conditions/movement", is_on_floor())
+	animation_tree.set("parameters/conditions/is_jumping", has_jumped and !is_on_floor())
 	animation_tree.set("parameters/conditions/is_landing", is_on_floor() and state_machine.get_current_node() == "Jump")
 	# Normalize speed to range [0, 2]
 	var blend_y = clamp(speed / walk_speed, 0.0, 2.0)
@@ -190,11 +185,12 @@ func update_animation_parameters():
 	# Smoothly interpolate blend position
 	var current_blend = animation_tree.get("parameters/Movement/blend_position")
 	var target_blend = Vector2(0, blend_y)
-	var new_blend = current_blend.lerp(target_blend, 0.2)  # Adjust 0.1 for smoothness
+	var smoothing = 0.08 if blend_y > 1.0 else 0.2
+	var new_blend = current_blend.lerp(target_blend, smoothing)
 	animation_tree.set("parameters/Movement/blend_position", new_blend)
 	
 	
 func switch_state(new_state: String):
 	if state_machine.get_current_node() != new_state:
 		state_machine.travel(new_state)
-		#print("Switching to animation state:", new_state)
+		print("Switching to animation state:", new_state)
