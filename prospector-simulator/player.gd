@@ -11,6 +11,8 @@ var run_toggle = false
 @onready var state_machine = $Pivot/city_dwellers_1/AnimationTree["parameters/playback"]
 @onready var animation_tree = $Pivot/city_dwellers_1/AnimationTree
 
+var landed_recently = false
+
 var is_first_person = true # Set this to true or false to switch view
 
 #region Camera Variables
@@ -40,9 +42,9 @@ func _ready():
 		pitch = third_person_camera.rotation.x
 
 func _physics_process(delta):
-	target_velocity = Vector3.ZERO
+
 	var direction = Vector3.ZERO
-	print("Y Velocity:", velocity.y, "Is on floor:", is_on_floor())
+	#print("Y Velocity:", velocity.y, "Is on floor:", is_on_floor())
 	
 	#region Movement input relative to camera
 	if Input.is_action_pressed("move_forward"):
@@ -90,11 +92,11 @@ func _physics_process(delta):
 		$Pivot.rotation.y = lerp_angle($Pivot.rotation.y, movement_yaw, delta * 10.0)
 
 		if is_on_floor():
-			state_machine.travel("Movement")
+			switch_state("Movement")
 	else:
 		run_toggle = false
-		if is_on_floor():
-			state_machine.travel("Idle")
+		if is_on_floor() and !landed_recently and state_machine.get_current_node() != "Jump":
+			switch_state("Idle")
 
 		# Always rotate character to face camera yaw when not moving
 		if is_first_person:
@@ -105,30 +107,33 @@ func _physics_process(delta):
 	
 	# Apply velocity
 	var current_speed = run_speed if run_toggle else walk_speed
-	target_velocity.x = direction.x * current_speed
-	target_velocity.z = direction.z * current_speed
-
+	velocity.x = direction.x * current_speed
+	velocity.z = direction.z * current_speed
 	
-	#region Jump input
+	# Jump
 	if Input.is_action_just_pressed("jump") and is_on_floor():
-		target_velocity.y = jump_velocity
-		state_machine.travel("Jump")
-		
+		velocity.y = jump_velocity
+		switch_state("Jump")
+	
+	if is_on_floor() and state_machine.get_current_node() == "Jump": #and !landed_recently:
+		switch_state("Land")
+		$LandTimer.start()
+		landed_recently = true
+	# Gravity
 	if not is_on_floor():
-		target_velocity.y -= fall_acceleration * delta
-	#endregion
-
-	velocity = target_velocity
+		velocity.y -= fall_acceleration * delta
 	update_animation_parameters()
 	move_and_slide()
+	#print("Post-move Velocity Y:", velocity.y, "is_on_floor():", is_on_floor())
 
 
 func _input(event):
 	if event.is_action_pressed("esc"):
-		if Input.get_mouse_mode() != Input.MOUSE_MODE_VISIBLE:
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-		else:
-			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		get_tree().quit()
+		#if Input.get_mouse_mode() != Input.MOUSE_MODE_VISIBLE:
+			#Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		#else:
+			#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		
 	if Input.is_action_just_pressed("run"):
 		run_toggle = !run_toggle
@@ -158,13 +163,20 @@ func _input(event):
 func toggle_view():
 	is_first_person = !is_first_person
 
+func _on_LandTimer_timeout():
+	landed_recently = false
+	if velocity.length() < 0.1:
+		switch_state("Idle")
+	else:
+		switch_state("Movement")
+
 func update_animation_parameters():
 	var speed = velocity.length()
 	var is_idle = speed < 0.1
 	animation_tree.set("parameters/conditions/idle", is_idle)
 	animation_tree.set("parameters/conditions/is_moving", !is_idle)
-	animation_tree.set("parameters/conditions/is_jumping", Input.is_action_just_pressed("jump"))
-
+	animation_tree.set("parameters/conditions/is_jumping", !is_on_floor())
+	animation_tree.set("parameters/conditions/is_landing", is_on_floor() and state_machine.get_current_node() == "Jump")
 	# Normalize speed to range [0, 2]
 	var blend_y = clamp(speed / walk_speed, 0.0, 2.0)
 
@@ -182,3 +194,7 @@ func update_animation_parameters():
 	animation_tree.set("parameters/Movement/blend_position", new_blend)
 	
 	
+func switch_state(new_state: String):
+	if state_machine.get_current_node() != new_state:
+		state_machine.travel(new_state)
+		#print("Switching to animation state:", new_state)
